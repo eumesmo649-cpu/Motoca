@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Motoca</title>
+<meta name="theme-color" content="#0f7b4f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Motoca">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>
+:root{--bg:#faf8f4;--card:#fff;--ink:#1d2320;--mut:#6b736e;--line:#e8e4dc;--ac:#0f7b4f;--acs:#e3f3ea;--red:#d64545;--reds:#fdeaea;--yel:#b57f00;--yels:#fff4d6;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141816;--card:#1e2421;--ink:#eef1ee;--mut:#98a29c;--line:#2b332f;--ac:#3fc38a;--acs:#173226;--red:#ff7b7b;--reds:#3a1e1e;--yel:#f0b73a;--yels:#3a3015}}
+:root[data-theme="dark"]{--bg:#141816;--card:#1e2421;--ink:#eef1ee;--mut:#98a29c;--line:#2b332f;--ac:#3fc38a;--acs:#173226;--red:#ff7b7b;--reds:#3a1e1e;--yel:#f0b73a;--yels:#3a3015}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 -apple-system,"Segoe UI",Roboto,system-ui,sans-serif}
+main{max-width:640px;margin:0 auto;padding:20px 16px 110px}
+h1{font-size:26px;margin:0 0 4px;letter-spacing:-.5px}h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin:26px 0 10px}
+.mut{color:var(--mut);font-size:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin-bottom:10px}
+.row{display:flex;align-items:center;gap:12px;justify-content:space-between}
+.tabs{display:flex;gap:6px;margin:16px 0 4px}
+.tab,.chip{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:7px 14px;font:inherit;font-size:14px;cursor:pointer}
+.tab.on,.chip.on{background:var(--ac);border-color:var(--ac);color:#fff}
+.btn{background:var(--ac);color:#fff;border:0;border-radius:12px;padding:10px 16px;font:inherit;font-weight:600;cursor:pointer}
+.btn.sec{background:var(--acs);color:var(--ac)}.btn.sm{padding:6px 12px;font-size:14px}
+.big{font-size:34px;font-weight:700;letter-spacing:-1px}
+input,select,textarea{width:100%;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
+label{display:block;font-size:13px;color:var(--mut);margin:12px 0 4px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.pill{font-size:13px;font-weight:600;padding:2px 9px;border-radius:999px}
+.late{background:var(--reds);color:var(--red)}.near{background:var(--yels);color:var(--yel)}.ok{background:var(--acs);color:var(--ac)}
+.fab{position:fixed;right:max(18px,calc(50% - 320px));bottom:calc(20px + env(safe-area-inset-bottom,0px));width:58px;height:58px;border-radius:50%;border:0;background:var(--ac);color:#fff;font-size:32px;box-shadow:0 6px 18px rgba(0,0,0,.25);cursor:pointer}
+.empty{text-align:center;padding:26px 10px}.empty b{font-size:22px;display:block}
+.chk{display:flex;gap:12px;align-items:center;cursor:pointer}.chk input{width:20px;height:20px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:90px;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px}
+a.lnk{color:var(--mut);font-size:13px;cursor:pointer;text-decoration:underline}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:20px;z-index:10}.dlg{max-width:380px;width:100%;margin:0}.btn.red{background:#d64545;color:#fff}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<input type="file" id="imp" accept=".json,application/json" hidden>
+<script>
+const K='motoca.v1';
+const DEF={ 'Troca de óleo':{c:'manutencao',t:{n:6,u:'m'},k:3000},'Lubrificação da corrente':{c:'cuidado',t:{n:15,u:'d'},k:1000},'Calibragem dos pneus':{c:'cuidado',t:{n:15,u:'d'}},'Lavagem':{c:'cuidado',t:{n:15,u:'d'}},'Revisão':{c:'manutencao',t:{n:12,u:'m'},k:10000},'Filtro de ar':{c:'manutencao',t:{n:12,u:'m'},k:10000},'Pastilhas de freio':{c:'manutencao',k:10000}};
+const PRE={manutencao:['Troca de óleo','Filtro','Pastilha de freio','Pneus','Vela','Revisão','Outra manutenção'],cuidado:['Lavagem','Lubrificação da corrente','Calibragem','Limpeza','Outro cuidado'],peca:['Nova peça']};
+const CATN={manutencao:'Manutenção',cuidado:'Cuidados',peca:'Peça'};
+const MES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+let S;try{S=JSON.parse(localStorage.getItem(K))}catch(e){}S=S||{moto:null,regs:[]};
+let V={view:'home',filtro:'todos',form:null,ob:{step:1,marca:'',modelo:'',ano:'',km:'',sel:{'Troca de óleo':1,'Lubrificação da corrente':1,'Calibragem dos pneus':1,'Lavagem':1}},toast:''};
+const save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}schedPush()};
+// ---- Backup automático no GitHub ----
+const GK='motoca.gh';let ghT,ghBusy=false,ghErr='';
+const cfg=()=>{try{return JSON.parse(localStorage.getItem(GK))||{}}catch(e){return{}}};
+const ghTxt=()=>{if(!cfg().token)return'';return localStorage.getItem('motoca.ghpend')==='1'?'Backup no GitHub: pendente':'Backup no GitHub: salvo '+(localStorage.getItem('motoca.ghat')||'')};
+const ghSet=()=>{const e=document.getElementById('ghs');if(e)e.textContent=ghTxt()};
+const ghH=c=>({Authorization:'Bearer '+(c.token||'').trim(),Accept:'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'});
+function schedPush(){if(!cfg().token)return;localStorage.setItem('motoca.ghpend','1');ghSet();clearTimeout(ghT);ghT=setTimeout(ghPush,10000)}
+async function ghPush(){const c=cfg();if(!c.token||!S.moto||ghBusy)return false;ghBusy=true;
+ const content=btoa(unescape(encodeURIComponent(JSON.stringify({app:'motoca',v:1,data:S},null,1))));
+ const url='https://api.github.com/repos/'+c.repo+'/contents/motoca-backup.json';
+ const put=sha=>fetch(url,{method:'PUT',headers:ghH(c),keepalive:true,body:JSON.stringify({message:'backup '+today(),content,sha:sha||undefined})});
+ try{let r=await put(localStorage.getItem('motoca.ghsha'));
+  if(r.status===409||r.status===422){const g=await fetch(url,{headers:ghH(c)});r=await put(g.ok?(await g.json()).sha:undefined)}
+  if(!r.ok)throw new Error(r.status);
+  localStorage.setItem('motoca.ghsha',(await r.json()).content.sha);localStorage.setItem('motoca.ghpend','0');
+  const n=new Date();localStorage.setItem('motoca.ghat',pad(n.getHours())+':'+pad(n.getMinutes()));ghBusy=false;ghSet();return true}
+ catch(e){ghErr=e.message;localStorage.setItem('motoca.ghpend','1');ghBusy=false;ghSet();return false}}
+function restoreFrom(txt){try{const d=JSON.parse(txt).data;if(!d||!d.moto||!Array.isArray(d.regs))throw 0;const go=()=>{S=d;save();V.view='home';toast('Backup restaurado')};if(S.moto)ask('Deseja substituir os dados atuais pelo backup?',go,'Substituir');else go()}catch(x){toast('Arquivo inválido')}}
+function ghView(){const g=V.gh;return`<h1>Backup no GitHub</h1><p class="mut">O Motoca envia seus dados para um repositório <b>privado</b> seu, alguns segundos depois de cada alteração. Cada envio vira um commit, então você ganha também o histórico de versões.</p>
+<div class="card"><label>Repositório privado (usuario/nome)</label><input data-f="gh.repo" value="${esc(g.repo||'')}" placeholder="seu-usuario/motoca-dados" autocapitalize="off" autocorrect="off">
+<label>Token (fine-grained, só esse repositório, Contents: leitura e escrita)</label><input type="password" data-f="gh.token" value="${esc(g.token||'')}" autocomplete="off"></div>
+<p class="mut">O token fica guardado só neste aparelho. Em um aparelho novo, use "Restaurar" antes de cadastrar a moto.</p>
+<button class="btn" data-a="ghSave" style="width:100%">Salvar e enviar backup</button>
+<p><button class="btn sec" data-a="ghRestore" style="width:100%">Restaurar do GitHub</button></p>
+<p><a class="lnk" data-a="tab" data-v="home">Voltar</a> &nbsp; ${cfg().token?'<a class="lnk" data-a="ghOff">Desconectar</a>':''}</p>`}
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const nf=n=>Number(n).toLocaleString('pt-BR');
+const brl=n=>'R$ '+Number(n).toLocaleString('pt-BR',{minimumFractionDigits:Number.isInteger(+n)?0:2,maximumFractionDigits:2});
+const pad=n=>String(n).padStart(2,'0');
+const iso=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const parse=s=>{const[a,b,c]=s.split('-').map(Number);return new Date(a,b-1,c)};
+const today=()=>iso(new Date());
+const addD=(s,n)=>{const d=parse(s);d.setDate(d.getDate()+n);return iso(d)};
+const addM=(s,n)=>{const d=parse(s),day=d.getDate();d.setDate(1);d.setMonth(d.getMonth()+n);const last=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();d.setDate(Math.min(day,last));return iso(d)};
+const diff=(a,b)=>Math.round((parse(b)-parse(a))/864e5);
+const dm=s=>s.slice(8,10)+'/'+s.slice(5,7);
+const icon=n=>/óleo/i.test(n)?'🛢️':/lav|limp/i.test(n)?'🧼':/corrente/i.test(n)?'⛓️':/calib|pneu/i.test(n)?'🛞':/pastilha|freio/i.test(n)?'🛑':/filtro/i.test(n)?'🌬️':/vela/i.test(n)?'⚡':/revis/i.test(n)?'📋':'🔧';
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+
+// ---- Regra central de recorrência/status ----
+function nextOf(r){if(!r.recorrente)return{};const t=r.intervalo_tempo,k=r.intervalo_km;
+ return{proxima_data:t?(t.u==='m'?addM(r.data,t.n):addD(r.data,t.n)):null,proxima_km:k?r.km+k:null}}
+const NEAR_DIAS=7,NEAR_KM=500;
+function info(r){const parts=[];let st='ok';const bump=x=>{if(x==='late')st='late';else if(x==='near'&&st!=='late')st='near'};
+ if(r.proxima_data){const d=diff(today(),r.proxima_data);
+  if(d<0){bump('late');parts.push(-d+(d===-1?' dia atrasada':' dias atrasada'))}
+  else{if(d<=NEAR_DIAS)bump('near');parts.push(d===0?'hoje':d===1?'amanhã':d>60?'em '+Math.round(d/30)+' meses':'em '+d+' dias')}}
+ if(r.proxima_km!=null){const k=r.proxima_km-S.moto.km;
+  if(k<0){bump('late');parts.push(nf(-k)+' km atrasada')}
+  else{if(k<=NEAR_KM)bump('near');parts.push('faltam '+nf(k)+' km')}}
+ return{st,txt:parts.join(' · ')}}
+const rank={late:0,near:1,ok:2};
+const abertos=()=>S.regs.filter(r=>r.recorrente&&r.aberto).map(r=>({r,i:info(r)}));
+
+// ---- Ações ----
+function toast(t){V.toast=t;render();setTimeout(()=>{V.toast='';render()},2200)}
+const ask=(msg,fn,lbl)=>{V.dlg={msg,fn,lbl:lbl||'Apagar'};render()};
+const A={
+ tab(v){V.view=v;render()},
+ filtro(v){V.filtro=v;render()},
+ obNext(){const o=V.ob;if(!o.marca||!o.modelo||!o.ano||o.km==='')return toast('Preencha todos os campos');o.step=2;render()},
+ obTog(v){V.ob.sel[v]=!V.ob.sel[v];render()},
+ obDone(){const o=V.ob;S.moto={id:uid(),marca:o.marca,modelo:o.modelo,ano:+o.ano,km:+String(o.km).replace(/\D/g,''),created_at:new Date().toISOString()};
+  Object.keys(o.sel).filter(n=>o.sel[n]).forEach(n=>{const d=DEF[n];S.regs.push({id:uid(),moto_id:S.moto.id,categoria:d.c,nome:n,data:today(),km:S.moto.km,valor:null,observacao:'',recorrente:true,intervalo_tempo:d.t||null,intervalo_km:d.k||null,aberto:true,inicial:true,created_at:new Date().toISOString()});Object.assign(S.regs.at(-1),nextOf(S.regs.at(-1)))});
+  save();V.view='home';render()},
+ km(){const v=+String($('#kmin').value).replace(/\D/g,'');if(!v)return;
+  if(v<S.moto.km)return ask('Voltar de '+nf(S.moto.km)+' km para '+nf(v)+' km? Use isso só para corrigir um erro de digitação.',()=>{S.moto.km=v;save();toast('Quilometragem corrigida')},'Corrigir');
+  S.moto.km=v;save();toast('Quilometragem atualizada')},
+ novo(){V.form={mode:'new',cat:null,nome:'',data:today(),km:S.moto.km,valor:'',obs:'',rec:false,tipo:'ambos',tn:6,tu:'m',kn:3000};V.view='form';render()},
+ preset(v){const f=V.form,[c,n]=v.split('|');f.cat=c;f.nome=/^(Outr|Nova)/.test(n)?'':n;f.rec=false;const d=DEF[n]||DEF[{'Filtro':'Filtro de ar','Pastilha de freio':'Pastilhas de freio','Calibragem':'Calibragem dos pneus'}[n]];
+  if(d){f.rec=true;f.tipo=d.t&&d.k?'ambos':d.t?'tempo':'km';if(d.t){f.tn=d.t.n;f.tu=d.t.u}if(d.k)f.kn=d.k}render()},
+ concluir(v){const r=S.regs.find(x=>x.id===v);const t=r.intervalo_tempo,k=r.intervalo_km;
+  V.form={mode:'done',from:r.id,cat:r.categoria,nome:r.nome,data:today(),km:S.moto.km,valor:'',obs:'',rec:true,tipo:t&&k?'ambos':t?'tempo':'km',tn:t?t.n:6,tu:t?t.u:'m',kn:k||3000};V.view='form';render()},
+ rec(v){V.form.rec=v==='1';render()},
+ tipo(v){V.form.tipo=v;render()},
+ cancel(){V.view=(V.form&&V.form.mode==='edit'&&V.back)||'home';render()},
+ salvar(){const f=V.form;const nome=f.nome.trim();if(!f.cat||!nome)return toast('Escolha o registro e o nome');
+  const km=+String(f.km).replace(/\D/g,'');if(!km&&km!==0)return toast('Informe a quilometragem');
+  const r={id:uid(),moto_id:S.moto.id,categoria:f.cat,nome,data:f.data||today(),km,valor:f.valor!==''?+String(f.valor).replace(',','.'):null,observacao:f.obs.trim(),recorrente:f.rec,intervalo_tempo:null,intervalo_km:null,aberto:false,created_at:new Date().toISOString()};
+  if(f.rec){if(f.tipo!=='km'){if(!(+f.tn>0))return toast('Informe o intervalo de tempo');r.intervalo_tempo={n:+f.tn,u:f.tu}}
+   if(f.tipo!=='tempo'){if(!(+f.kn>0))return toast('Informe o intervalo em km');r.intervalo_km=+f.kn}
+   if(f.mode!=='edit'){r.aberto=true;Object.assign(r,nextOf(r));
+   S.regs.forEach(o=>{if(o.aberto&&(o.id===f.from||o.nome.toLowerCase()===nome.toLowerCase()))o.aberto=false})}}
+  else if(f.from&&f.mode!=='edit'){const o=S.regs.find(x=>x.id===f.from);if(o)o.aberto=false}
+  if(f.mode==='edit'){const o=S.regs.find(x=>x.id===f.from),was=o.recorrente;
+   Object.assign(o,{categoria:f.cat,nome,data:r.data,km,valor:r.valor,observacao:r.observacao,recorrente:f.rec,intervalo_tempo:r.intervalo_tempo,intervalo_km:r.intervalo_km});
+   if(f.rec){if(!was){S.regs.forEach(x=>{if(x!==o&&x.aberto&&x.nome.toLowerCase()===nome.toLowerCase())x.aberto=false});o.aberto=true}Object.assign(o,nextOf(o))}
+   else{o.aberto=false;o.proxima_data=o.proxima_km=null}
+   if(o.inicial&&(r.data!==f.d0||km!==f.k0))o.inicial=false;if(km>S.moto.km)S.moto.km=km;save();V.view=V.back||'hist';return toast('Registro atualizado')}
+  if(km>S.moto.km)S.moto.km=km;S.regs.push(r);save();V.view='home';toast('Registro salvo')},
+ ghOpen(){V.gh={...cfg()};V.view='gh';render()},
+ async ghSave(){const g=V.gh;if(!/^[\w.-]+\/[\w.-]+$/.test((g.repo||'').trim())||!g.token)return toast('Informe repositório e token');
+  localStorage.setItem(GK,JSON.stringify({repo:g.repo.trim(),token:g.token.trim()}));localStorage.removeItem('motoca.ghsha');
+  if(!S.moto)return toast('Conectado. Agora restaure ou cadastre sua moto');
+  const ok=await ghPush();toast(ok?'Backup enviado ao GitHub':'Falha ('+ghErr+'). Confira repositório e token')},
+ ghOff(){localStorage.removeItem(GK);localStorage.removeItem('motoca.ghpend');render();toast('Desconectado')},
+ async ghRestore(){const g=V.gh;if(!g.repo||!g.token)return toast('Informe repositório e token');
+  try{const r=await fetch('https://api.github.com/repos/'+g.repo.trim()+'/contents/motoca-backup.json',{headers:{...ghH(g),Accept:'application/vnd.github.raw+json'}});if(!r.ok)throw 0;
+   localStorage.setItem(GK,JSON.stringify({repo:g.repo.trim(),token:g.token.trim()}));localStorage.removeItem('motoca.ghsha');restoreFrom(await r.text())}catch(e){toast('Não achei o backup. Confira repositório e token')}},
+ dlgNo(){V.dlg=null;render()},
+ dlgYes(){const f=V.dlg.fn;V.dlg=null;render();f()},
+ editar(v){const r=S.regs.find(x=>x.id===v),t=r.intervalo_tempo,k=r.intervalo_km;V.back=V.view;V.form={mode:'edit',ini:!!r.inicial,d0:r.data,k0:r.km,from:r.id,cat:r.categoria,nome:r.nome,data:r.data,km:r.km,valor:r.valor??'',obs:r.observacao||'',rec:r.recorrente,tipo:t&&k?'ambos':t?'tempo':k?'km':'ambos',tn:t?t.n:6,tu:t?t.u:'m',kn:k||3000};V.view='form';render()},
+ excluir(v){const r=S.regs.find(x=>x.id===v);ask('Deseja apagar "'+r.nome+'" de '+dm(r.data)+'?',()=>{S.regs=S.regs.filter(x=>x.id!==v);
+  if(r.aberto){const p=S.regs.filter(o=>o.recorrente&&!o.aberto&&o.nome.toLowerCase()===r.nome.toLowerCase()).sort((a,b)=>b.data.localeCompare(a.data)||b.created_at.localeCompare(a.created_at))[0];if(p)p.aberto=true}
+  if(V.view==='form')V.view='home';save();toast('Registro excluído')})},
+ exportar(){const j=JSON.stringify({app:'motoca',v:1,data:S},null,1);try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([j],{type:'application/json'}));a.download='motoca-backup-'+today()+'.json';document.body.appendChild(a);a.click();a.remove();toast('Backup baixado')}catch(e){V.bk=j;render()}},
+ importar(){$('#imp').click()},
+ reset(){ask('Deseja apagar todos os dados do Motoca neste navegador?',()=>{S={moto:null,regs:[]};save();V.ob.step=1;V.view='home';render()})}
+};
+document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(b)A[b.dataset.a](b.dataset.v)});
+document.addEventListener('input',e=>{const t=e.target,f=t.dataset.f;if(!f)return;const[o,k]=f.split('.');(o==='ob'?V.ob:o==='gh'?V.gh:V.form)[k]=t.value});
+document.addEventListener('change',e=>{if(e.target.dataset.f==='form.tu'){V.form.tu=e.target.value}});
+document.addEventListener('change',e=>{if(e.target.id!=='imp')return;const fl=e.target.files[0];if(!fl)return;const rd=new FileReader();rd.onload=()=>{restoreFrom(rd.result);e.target.value=''};rd.readAsText(fl)});
+
+// ---- Telas ----
+function onboarding(){const o=V.ob;
+ if(o.step===1)return`<h1>Bem-vindo ao Motoca 🏍️</h1><p class="mut">Vamos cadastrar sua moto. Leva 20 segundos.</p><div class="card">
+ <label>Marca</label><input data-f="ob.marca" value="${esc(o.marca)}" placeholder="Honda">
+ <label>Modelo</label><input data-f="ob.modelo" value="${esc(o.modelo)}" placeholder="CG 160 Titan">
+ <div class="g2"><div><label>Ano</label><input data-f="ob.ano" inputmode="numeric" value="${esc(o.ano)}" placeholder="2024"></div>
+ <div><label>Quilometragem atual</label><input data-f="ob.km" inputmode="numeric" value="${esc(o.km)}" placeholder="18420"></div></div></div>
+ <button class="btn" data-a="obNext" style="width:100%">Continuar</button><p><a class="lnk" data-a="importar">Já tenho um backup</a> &nbsp; <a class="lnk" data-a="ghOpen">Restaurar do GitHub</a></p>`;
+ return`<h1>O que você quer acompanhar?</h1><p class="mut">Marque o que fizer sentido. Os intervalos são sugestões iniciais e você edita quando quiser, ao concluir cada tarefa.</p>
+ ${Object.keys(DEF).map(n=>`<label class="card chk" style="margin:0 0 8px"><input type="checkbox" ${o.sel[n]?'checked':''} data-a="obTog" data-v="${n}"><span>${icon(n)} ${n}</span></label>`).join('')}
+ <button class="btn" data-a="obDone" style="width:100%;margin-top:10px">Começar</button>`}
+
+function item(x){const{r,i}=x;return`<div class="card row"><div><div>${icon(r.nome)} <b>${esc(r.nome)}</b></div><span class="pill ${i.st}">${i.txt}</span> <a class="lnk" data-a="editar" data-v="${r.id}">Editar</a></div><button class="btn ${i.st==='ok'?'sec':''} sm" data-a="concluir" data-v="${r.id}">Concluir</button></div>`}
+function home(){const m=S.moto,list=abertos().sort((a,b)=>rank[a.i.st]-rank[b.i.st]);
+ const g=s=>list.filter(x=>x.i.st===s);const gm=(t,l,em)=>l.length?`<h2>${em} ${t}</h2>`+l.map(item).join(''):'';
+ const ym=today().slice(0,7);const gasto=S.regs.filter(r=>!r.inicial&&r.valor&&r.data.slice(0,7)===ym).reduce((s,r)=>s+r.valor,0);
+ const pend=g('late').length+g('near').length;
+ return`<div class="card"><div class="mut">Minha Motoca</div><b>${esc(m.marca)} ${esc(m.modelo)}</b> <span class="mut">${m.ano}</span>
+ <div class="big">${nf(m.km)} km</div><div class="row" style="gap:8px;margin-top:8px"><input id="kmin" inputmode="numeric" placeholder="Nova quilometragem"><button class="btn sm" data-a="km" style="white-space:nowrap">Atualizar km</button></div>
+ ${gasto?`<div class="mut" style="margin-top:10px">Gasto neste mês: <b>${brl(gasto)}</b></div>`:''}</div>
+ ${gm('Atrasados',g('late'),'🔴')}${gm('Próximos',g('near'),'🟡')}
+ ${list.length&&!pend?`<div class="empty"><b>Tudo em dia.</b><span class="mut">Sua motoca está cuidada.</span></div>`:''}
+ ${gm('Em dia',g('ok'),'🟢')}
+ ${!list.length?`<div class="empty"><b>Nada sendo acompanhado</b><span class="mut">Toque no + para registrar um cuidado e, se quiser, repeti-lo.</span></div>`:''}`}
+
+function hist(){const F=V.filtro,items=S.regs.filter(r=>!r.inicial&&(F==='todos'||r.categoria===F)).sort((a,b)=>b.data.localeCompare(a.data)||b.created_at.localeCompare(a.created_at));
+ const chips=[['todos','Todos'],['manutencao','Manutenção'],['cuidado','Cuidados'],['peca','Peças']].map(([k,l])=>`<button class="chip ${F===k?'on':''}" data-a="filtro" data-v="${k}">${l}</button>`).join('');
+ let out=`<div class="chips" style="margin:14px 0">${chips}</div>`,cur='';
+ if(!items.length)out+=`<div class="empty mut">Nenhum registro ainda.</div>`;
+ items.forEach(r=>{const h=MES[+r.data.slice(5,7)-1]+' '+r.data.slice(0,4);if(h!==cur){out+=`<h2>${h}</h2>`;cur=h}
+  out+=`<div class="card"><div class="row"><b>${icon(r.nome)} ${esc(r.nome)}</b>${r.valor!=null?`<b>${brl(r.valor)}</b>`:''}</div><div class="mut">${dm(r.data)} · ${nf(r.km)} km${r.recorrente?' · 🔁':''}</div>${r.observacao?`<div class="mut">${esc(r.observacao)}</div>`:''}<div style="margin-top:6px"><a class="lnk" data-a="editar" data-v="${r.id}">Editar</a> &nbsp; <a class="lnk" data-a="excluir" data-v="${r.id}">Excluir</a></div></div>`});
+ return out}
+
+function form(){const f=V.form,ch=(v,l)=>`<button class="chip ${f.tipo===v?'on':''}" data-a="tipo" data-v="${v}">${l}</button>`;
+ const presets=f.mode==='new'?Object.keys(PRE).map(c=>`<h2 style="margin:16px 0 8px">${CATN[c]}</h2><div class="chips">${PRE[c].map(n=>`<button class="chip ${f.cat===c&&(f.nome===n||(!f.nome&&/^(Outr|Nova)/.test(n)&&f._x===n))?'on':''}" data-a="preset" data-v="${c}|${n}">${n}</button>`).join('')}</div>`).join(''):'';
+ return`<h1>${f.mode==='done'?'Concluir tarefa':f.mode==='edit'?'Editar registro':'Adicionar registro'}</h1>${presets}
+ ${f.cat||f.mode==='done'?`<div class="card" style="margin-top:16px">
+ <label>Nome do registro</label><input data-f="form.nome" value="${esc(f.nome)}" placeholder="Ex.: Kit relação">
+ <div class="g2"><div><label>${f.ini?'Última vez que fez':'Data'}</label><input type="date" data-f="form.data" value="${f.data}"></div><div><label>Km no momento</label><input inputmode="numeric" data-f="form.km" value="${esc(f.km)}"></div></div>
+ <label>Valor gasto (opcional)</label><input inputmode="decimal" data-f="form.valor" value="${esc(f.valor)}" placeholder="R$ 0,00">
+ <label>Observação (opcional)</label><textarea rows="2" data-f="form.obs">${esc(f.obs)}</textarea>
+ <label>Esse cuidado deve se repetir?</label><div class="chips"><button class="chip ${!f.rec?'on':''}" data-a="rec" data-v="0">Não</button><button class="chip ${f.rec?'on':''}" data-a="rec" data-v="1">Sim</button></div>
+ ${f.rec?`<label>Repetir por</label><div class="chips">${ch('tempo','Tempo')}${ch('km','Quilometragem')}${ch('ambos','Ambos')}</div>
+ <div class="g2">${f.tipo!=='km'?`<div><label>A cada</label><div class="row" style="gap:6px"><input inputmode="numeric" data-f="form.tn" value="${f.tn}"><select data-f="form.tu"><option value="m" ${f.tu==='m'?'selected':''}>meses</option><option value="d" ${f.tu==='d'?'selected':''}>dias</option></select></div></div>`:''}
+ ${f.tipo!=='tempo'?`<div><label>A cada (km)</label><input inputmode="numeric" data-f="form.kn" value="${f.kn}"></div>`:''}</div>
+ ${f.tipo==='ambos'?'<p class="mut">Vale o que acontecer primeiro. Os intervalos são editáveis.</p>':''}`:''}</div>
+ <button class="btn" data-a="salvar" style="width:100%">Salvar</button>${f.ini?`<p><a class="lnk" data-a="excluir" data-v="${f.from}">Parar de acompanhar</a></p>`:''}`:''}
+ <p><a class="lnk" data-a="cancel">Cancelar</a></p>`}
+
+function render(){const el=$('#app');
+ if(V.view==='gh'){el.innerHTML=ghView()}
+ else if(!S.moto){el.innerHTML=onboarding()}
+ else if(V.view==='form'){el.innerHTML=form()}
+ else{el.innerHTML=`<div class="tabs"><button class="tab ${V.view==='home'?'on':''}" data-a="tab" data-v="home">Hoje</button><button class="tab ${V.view==='hist'?'on':''}" data-a="tab" data-v="hist">Histórico</button></div>`+(V.view==='home'?home():'<h1>Histórico</h1>'+hist())+`<p style="margin-top:30px"><a class="lnk" data-a="exportar">Exportar backup</a> &nbsp; <a class="lnk" data-a="importar">Importar backup</a> &nbsp; <a class="lnk" data-a="ghOpen">Backup no GitHub</a> &nbsp; <a class="lnk" data-a="reset">Apagar dados</a></p><div class="mut" id="ghs">${esc(ghTxt())}</div>${V.bk?`<textarea readonly rows="5" onclick="this.select()">${esc(V.bk)}</textarea><p class="mut">Copie este texto e guarde num arquivo .json.</p>`:''}<button class="fab" data-a="novo" aria-label="Adicionar registro">+</button>`}
+ if(V.dlg)el.insertAdjacentHTML('beforeend',`<div class="ov"><div class="card dlg"><b>${esc(V.dlg.msg)}</b><p class="mut">Essa ação não pode ser desfeita.</p><div class="row" style="gap:8px"><button class="btn sec" data-a="dlgNo" style="flex:1">Cancelar</button><button class="btn red" data-a="dlgYes" style="flex:1">${esc(V.dlg.lbl)}</button></div></div></div>`);
+ if(V.toast)el.insertAdjacentHTML('beforeend',`<div class="toast">${esc(V.toast)}</div>`)}
+render();
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&localStorage.getItem('motoca.ghpend')==='1'){clearTimeout(ghT);ghPush()}});
+if(localStorage.getItem('motoca.ghpend')==='1')setTimeout(ghPush,2000);
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
