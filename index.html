@@ -121,7 +121,9 @@ const A={
  obDone(){const o=V.ob;S.moto={id:uid(),marca:o.marca,modelo:o.modelo,ano:+o.ano,km:+String(o.km).replace(/\D/g,''),created_at:new Date().toISOString()};
   Object.keys(o.sel).filter(n=>o.sel[n]).forEach(n=>{const d=DEF[n];S.regs.push({id:uid(),moto_id:S.moto.id,categoria:d.c,nome:n,data:today(),km:S.moto.km,valor:null,observacao:'',recorrente:true,intervalo_tempo:d.t||null,intervalo_km:d.k||null,aberto:true,inicial:true,created_at:new Date().toISOString()});Object.assign(S.regs.at(-1),nextOf(S.regs.at(-1)))});
   save();V.view='home';render()},
- km(){const v=+String($('#kmin').value).replace(/\D/g,'');if(!v)return;if(v<S.moto.km)return toast('A quilometragem não pode diminuir');S.moto.km=v;save();toast('Quilometragem atualizada')},
+ km(){const v=+String($('#kmin').value).replace(/\D/g,'');if(!v)return;
+  if(v<S.moto.km)return ask('Voltar de '+nf(S.moto.km)+' km para '+nf(v)+' km? Use isso só para corrigir um erro de digitação.',()=>{S.moto.km=v;save();toast('Quilometragem corrigida')},'Corrigir');
+  S.moto.km=v;save();toast('Quilometragem atualizada')},
  novo(){V.form={mode:'new',cat:null,nome:'',data:today(),km:S.moto.km,valor:'',obs:'',rec:false,tipo:'ambos',tn:6,tu:'m',kn:3000};V.view='form';render()},
  preset(v){const f=V.form,[c,n]=v.split('|');f.cat=c;f.nome=/^(Outr|Nova)/.test(n)?'':n;f.rec=false;const d=DEF[n]||DEF[{'Filtro':'Filtro de ar','Pastilha de freio':'Pastilhas de freio','Calibragem':'Calibragem dos pneus'}[n]];
   if(d){f.rec=true;f.tipo=d.t&&d.k?'ambos':d.t?'tempo':'km';if(d.t){f.tn=d.t.n;f.tu=d.t.u}if(d.k)f.kn=d.k}render()},
